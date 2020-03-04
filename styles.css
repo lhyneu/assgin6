@@ -3,13 +3,16 @@ table {
     border-collapse: collapse;
   }
 
-td {
+td, th{
     width: 80px;
     height: 45px;
     border-color: black;
     border-style: solid;
-    padding: 0px;
-    
+    padding: 0px;   
+}
+
+th {
+    background-color: grey;
 }
 
 input {
