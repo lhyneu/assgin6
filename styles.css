@@ -24,7 +24,8 @@ td, th{
 }
 
 th {
-    background-color: grey;
+    background-color: darkslategray;
+    color: floralwhite;
 }
 
 input {
