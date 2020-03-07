@@ -35,9 +35,8 @@ function addRow() {
     table.appendChild(tr)
 }
 
-function genColId() {
+function genColId(c) {
     let s = [];
-    let c = columns;
     while (c > 0) {
         let r = c % 26;
         c = parseInt(c / 26);
@@ -60,7 +59,7 @@ function addCol() {
         columns++;
         let header = childs[0];
         let th = document.createElement('th');
-        th.append(genColId());
+        th.append(genColId(columns));
         header.appendChild(th);
         for (let i = 1; i < childs.length; i++) {
             let tr = childs[i];
@@ -143,6 +142,44 @@ function removeRow() {
         selCol = "";
         row--;
         table.removeChild(tr);
+    }
+}
+
+function removeCol() {
+    if (selCol != "" && columns > 1) {
+        let table = document.getElementById('roottable');
+        let trs = table.childNodes;
+        let matched = false;
+        let td;
+        let idx;
+        for (let i = 1; i < trs.length; i++) {
+            let tds = trs[i].childNodes;
+            for (let j = 1;j < tds.length; j++) {
+                if (tds[j].className == selCol) {
+                    idx = j;
+                    td = tds[j];
+                    matched = true;
+                } else {
+                    if (matched) {
+                        let newCol = parseInt(tds[j].className.slice(3))-1;
+                        tds[j].className = "col" + String(newCol);
+                    }
+                }
+            }
+            matched = false;
+            console.log(td);
+            trs[i].removeChild(td);
+        }
+        let header = trs[0].childNodes;
+        for (let i = idx+1; i<header.length;i++) {
+            let newCol = genColId(i-1);
+            header[i].textContent = newCol;
+        }
+        trs[0].removeChild(header[idx]);
+        dye(false);
+        selRow = "";
+        selCol = "";
+        columns--;
     }
 }
 
