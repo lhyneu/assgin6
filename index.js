@@ -27,7 +27,7 @@ function addRow() {
         let td = document.createElement("td");
         let input = document.createElement('input');
         input.type = "text";
-        id = "col" + String(i+1);
+        id = "col" + String(i + 1);
         td.appendChild(input);
         td.setAttribute("class", id);
         tr.appendChild(td);
@@ -53,14 +53,12 @@ function genColId() {
 
 function addCol() {
     let table = document.getElementById('roottable')
-    let childs = table.childNodes
-    console.log(childs.length);
+    let childs = table.childNodes;
     if (childs.length <= 1) {
         addRow();
     } else {
         columns++;
         let header = childs[0];
-        console.log(header);
         let th = document.createElement('th');
         th.append(genColId());
         header.appendChild(th);
@@ -82,16 +80,15 @@ function dye(flag) {
     if (!flag) {
         color = ""
     }
-    let row = document.querySelector('.'+selRow).childNodes;
+    let row = document.querySelector('.' + selRow).childNodes;
     // console.log(row);
     for (let i = 1; i < row.length; i++) {
         let td = row[i];
-        console.log(td);
         td.childNodes[0].style.backgroundColor = color;
     }
-    let col = document.querySelectorAll('.'+selCol);
+    let col = document.querySelectorAll('.' + selCol);
     // console.log(col);
-    for (let i=0; i<col.length; i++) {
+    for (let i = 0; i < col.length; i++) {
         let td = col[i];
         td.childNodes[0].style.backgroundColor = color;
     }
@@ -99,7 +96,7 @@ function dye(flag) {
 
 
 function change(change) {
-    
+
     let sel = window.event.srcElement;
     if (sel.tagName.toLowerCase() == "input") {
         sel = sel.parentNode;
@@ -114,7 +111,6 @@ function change(change) {
     }
     //alert(change.tagName.toLowerCase());
     if (sel.tagName.toLowerCase() == "td") {
-        console.log('td selected!');
         selRow = sel.parentNode.className;
         selCol = sel.className;
         dye(true);
@@ -124,44 +120,63 @@ function change(change) {
     }
 }
 
+function removeRow() {
+    if (selRow != "" && row > 2) {
+        let table = document.getElementById('roottable');
+        let trs = table.childNodes;
+        let matched = false;
+        let tr;
+        for (let i = 1; i < trs.length; i++) {
+            if (trs[i].className == selRow) {
+                tr = trs[i];
+                matched = true;
+            } else {
+                if (matched) {
+                    let newRow = parseInt(trs[i].className.slice(3))-1;
+                    trs[i].className = "row" + String(newRow);
+                    trs[i].childNodes[0].textContent = newRow;
+                }
+            }
+        }
+        dye(false);
+        selRow = "";
+        selCol = "";
+        row--;
+        table.removeChild(tr);
+    }
+}
+
 
 function download_csv(csv, filename) {
     var csvFile;
     var downloadLink;
-
     // CSV FILE
-    csvFile = new Blob([csv], {type: "text/csv"});
-
+    csvFile = new Blob([csv], { type: "text/csv" });
     // Download link
     downloadLink = document.createElement("a");
-
     // File name
     downloadLink.download = filename;
-
     // We have to create a link to the file
     downloadLink.href = window.URL.createObjectURL(csvFile);
-
     // Make sure that the link is not displayed
     downloadLink.style.display = "none";
-
     // Add the link to your DOM
     document.body.appendChild(downloadLink);
-
     // Lanzamos
     downloadLink.click();
 }
 
 function export_table_to_csv(html, filename) {
-	var csv = [];
-	var rows = document.querySelectorAll("table tr");
-	
+    var csv = [];
+    var rows = document.querySelectorAll("table tr");
+
     for (var i = 1; i < rows.length; i++) {
-		var row = [], cols = rows[i].querySelectorAll("td");
-        for (var j = 0; j < cols.length; j++) 
+        var row = [], cols = rows[i].querySelectorAll("td");
+        for (var j = 0; j < cols.length; j++)
             row.push(cols[j].childNodes[0].value);
-            // console.log(cols[j])
-		csv.push(row.join(","));		
-	}
+        // console.log(cols[j])
+        csv.push(row.join(","));
+    }
     // console.log(csv)
     // Download CSV
     download_csv(csv.join("\n"), filename);
