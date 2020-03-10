@@ -3,6 +3,106 @@ var rows = 1;
 var selCol = '';
 var selRow = '';
 
+function findTd(label) {
+    let table = document.getElementById('roottable')
+    let char = []
+    let number = []
+    for (let i =0;i<label.length;i++) {
+        if (!parseInt(label[i])){
+            char.push(label[i]);
+        } else {
+            number.push(label[i]);
+        }
+    }
+    let colLabel = char.join('');
+    let header = table.childNodes[0].childNodes;
+    let col = '.col'
+    for (let i = 1; i< header.length;i++) {
+        if (header[i].textContent == colLabel){
+            col = '.col' + String(i);
+        }
+    }
+    let row = ".row"+number.join("");
+    let td = document.querySelector(row+" "+col);
+    // console.log(label)
+    // console.log(td)
+    return td.childNodes[0]
+}
+
+function handleStaticFormula(td) {
+    let text = td.childNodes[0].value;
+    if (text[0] == "=") {
+        let formula = text.slice(1);
+        if (text.includes("+")) {
+            let part1 = findTd(formula.split('+')[0])
+            let part2 = findTd(formula.split('+')[1])
+            // td.textContent = parseInt(add1.value) + parseInt(add2.value);
+            if (td.childNodes.length == 1) {
+                let txt = document.createElement("div")
+                txt.style.display = "none"
+                txt.textContent = text
+                td.appendChild(txt);
+            } else {
+                td.childNodes[1].textContent = text
+            }
+            td.childNodes[0].value = parseInt(part1.value) + parseInt(part2.value);
+        } else if (text.includes("-")) {
+            let part1 = findTd(formula.split('-')[0])
+            let part2 = findTd(formula.split('-')[1])
+            if (td.childNodes.length == 1) {
+                let txt = document.createElement("div")
+                txt.style.display = "none"
+                txt.textContent = text
+                td.appendChild(txt);
+            } else {
+                td.childNodes[1].textContent = text
+            }
+            td.childNodes[0].value = parseInt(part1.value) - parseInt(part2.value);
+        } else if (text.includes("*")) {
+            let part1 = findTd(formula.split('*')[0])
+            let part2 = findTd(formula.split('*')[1])
+            if (td.childNodes.length == 1) {
+                let txt = document.createElement("div")
+                txt.style.display = "none"
+                txt.textContent = text
+                td.appendChild(txt);
+            } else {
+                td.childNodes[1].textContent = text
+            }
+            td.childNodes[0].value = parseInt(part1.value) * parseInt(part2.value);
+        } else if (text.includes("/")) {
+            let part1 = findTd(formula.split('/')[0])
+            let part2 = findTd(formula.split('/')[1])
+            if (td.childNodes.length == 1) {
+                let txt = document.createElement("div")
+                txt.style.display = "none"
+                txt.textContent = text
+                td.appendChild(txt);
+            } else {
+                td.childNodes[1].textContent = text
+            }
+            td.childNodes[0].value = parseInt(part1.value) / parseInt(part2.value);
+        }
+    }
+}
+
+function handleCell(event) {
+    let td = event.target.parentNode;
+    handleStaticFormula(td)
+    console.log(event.target);
+    console.log("ITWORKS");
+}
+
+
+function createTd() {
+    let td = document.createElement('td');
+    let input = document.createElement('input');
+    input.type = "text";
+    input.setAttribute("onblur", "handleCell(event)");
+    td.appendChild(input);
+    return td
+}
+
 window.onload = function () {
     let table = document.getElementById('roottable')
     let header = document.createElement("tr");
@@ -22,11 +122,8 @@ window.onload = function () {
     rows++;
     columns++;
     // create #of cols
-    let td = document.createElement("td");
-    let input = document.createElement('input');
-    input.type = "text";
+    let td = createTd();
     id = "col" + String(1);
-    td.appendChild(input);
     td.setAttribute("class", id);
     tr.appendChild(td);
     table.appendChild(tr)
@@ -65,11 +162,8 @@ function addRow(bias) {
         tr.appendChild(th);
         tr.setAttribute("onclick", "change()")
         for (let i = 1; i < columns; i++) {
-            let td = document.createElement("td");
-            let input = document.createElement('input');
-            input.type = "text";
+            let td = createTd();
             let colId = "col" + String(i);
-            td.appendChild(input);
             td.setAttribute("class", colId);
             tr.appendChild(td);
         }
@@ -102,11 +196,8 @@ function addCol(bias) {
         for(let i=1; i<trs.length;i++){
             let curRow = trs[i];
             let selColTd = trs[i].querySelector("." + selCol);
-            let td = document.createElement("td");
-            let input = document.createElement('input');
-            input.type = "text";
+            let td = createTd();
             let colId = "col" + String(i + 1);
-            td.appendChild(input);
             td.setAttribute("class", colId);
             if (bias == 1) {
                 // Insert after sel row
@@ -166,7 +257,7 @@ function dye(flag) {
 function change(change) {
     let table = document.getElementById('roottable')
     let sel = window.event.srcElement;
-    if (sel.tagName.toLowerCase() == "input") {
+    if (sel.tagName.toLowerCase() == "input" || sel.tagName.toLowerCase() == "div") {
         sel = sel.parentNode;
     }
     if (selCol != "" && selRow != "") {
@@ -178,10 +269,14 @@ function change(change) {
         dye(false);
     }
     //alert(change.tagName.toLowerCase());
+    // console.log("SRC:", event.srcElement)
     if (sel.tagName.toLowerCase() == "td") {
         selRow = sel.parentNode.className;
         selCol = sel.className;
         dye(true);
+        if (sel.childNodes.length > 1) {
+            sel.childNodes[0].value = sel.childNodes[1].textContent
+        }
         sel.childNodes[0].style.backgroundColor = "#BBBBBB";
     } else if (sel.tagName.toLowerCase() == "th") {
         console.log('th selected!');
@@ -219,8 +314,8 @@ function removeCol() {
     if (selCol != "" && columns > 2) {
         let trs = table.childNodes;
         let matched = false;
-        let td;
         let idx;
+        let td;
         for (let i = 1; i < trs.length; i++) {
             let tds = trs[i].childNodes;
             for (let j = 1; j < tds.length; j++) {
