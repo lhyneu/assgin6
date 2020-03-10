@@ -1,38 +1,129 @@
 var columns = 1;
-var row = 1;
+var rows = 1;
 var selCol = '';
 var selRow = '';
 
-function addRow() {
+window.onload = function () {
     let table = document.getElementById('roottable')
-    if (row == 1) {
-        let header = document.createElement("tr");
-        let th_emp = document.createElement("th");
-        let th_col1 = document.createElement("th");
-        th_col1.append('A');
-        header.appendChild(th_emp);
-        header.appendChild(th_col1);
-        table.appendChild(header);
-    }
+    let header = document.createElement("tr");
+    let th_emp = document.createElement("th");
+    let th_col1 = document.createElement("th");
+    th_col1.append('A');
+    header.appendChild(th_emp);
+    header.appendChild(th_col1);
+    table.appendChild(header);
     let tr = document.createElement("tr");
     let th = document.createElement("th");
-    th.append(String(row));
+    th.append(String(1));
     tr.appendChild(th);
-    let id = "row" + String(row);
+    let id = "row" + String(1);
     tr.setAttribute("class", id);
     tr.setAttribute("onclick", "change()")
-    row++;
+    rows++;
+    columns++;
     // create #of cols
-    for (let i = 0; i < columns; i++) {
-        let td = document.createElement("td");
-        let input = document.createElement('input');
-        input.type = "text";
-        id = "col" + String(i + 1);
-        td.appendChild(input);
-        td.setAttribute("class", id);
-        tr.appendChild(td);
-    }
+    let td = document.createElement("td");
+    let input = document.createElement('input');
+    input.type = "text";
+    id = "col" + String(1);
+    td.appendChild(input);
+    td.setAttribute("class", id);
+    tr.appendChild(td);
     table.appendChild(tr)
+}
+
+function reNumberRow() {
+    dye(false);
+    let table = document.getElementById('roottable');
+    let trs = table.childNodes;
+    for (let i = 1; i<trs.length; i++) {
+        let tr = trs[i]
+        tr.className = "row" + String(i);
+        tr.childNodes[0].textContent = i;
+    }
+}
+
+function reNumberCol() {
+    dye(false);
+    let table = document.getElementById('roottable');
+    let trs = table.childNodes;
+    for (let i = 1; i<trs.length; i++) {
+        let tr = trs[i]
+        let tds = tr.childNodes;
+        for (let j=1; j < tds.length;j++){
+            let td = tds[j]
+            td.className = "col" + String(j)
+        }
+    }
+}
+
+function addRow(bias) {
+    let table = document.getElementById('roottable')
+    if (selRow != "") {
+        let tr = document.createElement("tr");
+        let th = document.createElement("th");
+        tr.appendChild(th);
+        tr.setAttribute("onclick", "change()")
+        for (let i = 1; i < columns; i++) {
+            let td = document.createElement("td");
+            let input = document.createElement('input');
+            input.type = "text";
+            let colId = "col" + String(i);
+            td.appendChild(input);
+            td.setAttribute("class", colId);
+            tr.appendChild(td);
+        }
+        let selRowTr = document.querySelector('.' + selRow);
+        if (bias == 1) {
+            // Insert after sel row
+            if (selRowTr.nextSibling != null) {
+                table.insertBefore(tr, selRowTr.nextSibling);
+            } else {
+                table.appendChild(tr);
+            }
+        } else {
+            table.insertBefore(tr, selRowTr);
+        }
+        reNumberRow();
+        selRow = "";
+        selCol = "";
+        rows++;
+    }
+}
+
+function addCol(bias) {
+    let table = document.getElementById('roottable')
+    if (selCol != "") {
+        let header = table.childNodes[0]
+        let th = document.createElement('th');
+        th.append(genColId(columns));
+        header.appendChild(th);
+        let trs = table.childNodes;
+        for(let i=1; i<trs.length;i++){
+            let curRow = trs[i];
+            let selColTd = trs[i].querySelector("." + selCol);
+            let td = document.createElement("td");
+            let input = document.createElement('input');
+            input.type = "text";
+            let colId = "col" + String(i + 1);
+            td.appendChild(input);
+            td.setAttribute("class", colId);
+            if (bias == 1) {
+                // Insert after sel row
+                if (selColTd.nextSibling != null) {
+                    curRow.insertBefore(td, selColTd.nextSibling);
+                } else {
+                    curRow.appendChild(td);
+                }
+            } else {
+                curRow.insertBefore(td, selColTd);
+            }
+        }
+        reNumberCol();
+        selRow = "";
+        selCol = "";
+        columns++;
+    }
 }
 
 function genColId(c) {
@@ -50,31 +141,9 @@ function genColId(c) {
     return s.join("");
 }
 
-function addCol() {
-    let table = document.getElementById('roottable')
-    let childs = table.childNodes;
-    if (childs.length <= 1) {
-        addRow();
-    } else {
-        columns++;
-        let header = childs[0];
-        let th = document.createElement('th');
-        th.append(genColId(columns));
-        header.appendChild(th);
-        for (let i = 1; i < childs.length; i++) {
-            let tr = childs[i];
-            let td = document.createElement('td');
-            let id = "col" + String(columns);
-            td.setAttribute("class", id);
-            let input = document.createElement('input');
-            input.type = "text";
-            td.appendChild(input);
-            tr.appendChild(td);
-        }
-    }
-}
 
 function dye(flag) {
+    let table = document.getElementById('roottable')
     let color = "#F0F0F0"
     if (!flag) {
         color = ""
@@ -95,7 +164,7 @@ function dye(flag) {
 
 
 function change(change) {
-
+    let table = document.getElementById('roottable')
     let sel = window.event.srcElement;
     if (sel.tagName.toLowerCase() == "input") {
         sel = sel.parentNode;
@@ -120,8 +189,8 @@ function change(change) {
 }
 
 function removeRow() {
-    if (selRow != "" && row > 2) {
-        let table = document.getElementById('roottable');
+    let table = document.getElementById('roottable')
+    if (selRow != "" && rows > 2) {
         let trs = table.childNodes;
         let matched = false;
         let tr;
@@ -131,7 +200,7 @@ function removeRow() {
                 matched = true;
             } else {
                 if (matched) {
-                    let newRow = parseInt(trs[i].className.slice(3))-1;
+                    let newRow = parseInt(trs[i].className.slice(3)) - 1;
                     trs[i].className = "row" + String(newRow);
                     trs[i].childNodes[0].textContent = newRow;
                 }
@@ -140,39 +209,38 @@ function removeRow() {
         dye(false);
         selRow = "";
         selCol = "";
-        row--;
+        rows--;
         table.removeChild(tr);
     }
 }
 
 function removeCol() {
-    if (selCol != "" && columns > 1) {
-        let table = document.getElementById('roottable');
+    let table = document.getElementById('roottable')
+    if (selCol != "" && columns > 2) {
         let trs = table.childNodes;
         let matched = false;
         let td;
         let idx;
         for (let i = 1; i < trs.length; i++) {
             let tds = trs[i].childNodes;
-            for (let j = 1;j < tds.length; j++) {
+            for (let j = 1; j < tds.length; j++) {
                 if (tds[j].className == selCol) {
                     idx = j;
                     td = tds[j];
                     matched = true;
                 } else {
                     if (matched) {
-                        let newCol = parseInt(tds[j].className.slice(3))-1;
+                        let newCol = parseInt(tds[j].className.slice(3)) - 1;
                         tds[j].className = "col" + String(newCol);
                     }
                 }
             }
             matched = false;
-            console.log(td);
             trs[i].removeChild(td);
         }
         let header = trs[0].childNodes;
-        for (let i = idx+1; i<header.length;i++) {
-            let newCol = genColId(i-1);
+        for (let i = idx + 1; i < header.length; i++) {
+            let newCol = genColId(i - 1);
             header[i].textContent = newCol;
         }
         trs[0].removeChild(header[idx]);
@@ -205,10 +273,10 @@ function download_csv(csv, filename) {
 
 function export_table_to_csv(html, filename) {
     var csv = [];
-    var rows = document.querySelectorAll("table tr");
+    let allRows = document.querySelectorAll("table tr");
 
-    for (var i = 1; i < rows.length; i++) {
-        var row = [], cols = rows[i].querySelectorAll("td");
+    for (var i = 1; i < allRows.length; i++) {
+        let row = [], cols = allRows[i].querySelectorAll("td");
         for (var j = 0; j < cols.length; j++)
             row.push(cols[j].childNodes[0].value);
         // console.log(cols[j])
