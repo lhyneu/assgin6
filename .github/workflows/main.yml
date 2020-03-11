@@ -22,4 +22,4 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     - run: npm install
-    - run: node_modules/.bin/webpack-dev-server --progress
+    - run: npm run start
