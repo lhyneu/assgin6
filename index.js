@@ -2,13 +2,20 @@ var columns = 1;
 var rows = 1;
 var selCol = '';
 var selRow = '';
+window.subP1Map = {};
+window.subP2Map = {};
+
+// const { fromEvent } = window.rxjs;
+import { fromEvent } from "rxjs";
+// import Rx from "rxjs/Rx";
+// var rxjs = require('rxjs');
 
 function findTd(label) {
     let table = document.getElementById('roottable')
     let char = []
     let number = []
-    for (let i =0;i<label.length;i++) {
-        if (!parseInt(label[i])){
+    for (let i = 0; i < label.length; i++) {
+        if (!parseInt(label[i])) {
             char.push(label[i]);
         } else {
             number.push(label[i]);
@@ -17,76 +24,79 @@ function findTd(label) {
     let colLabel = char.join('');
     let header = table.childNodes[0].childNodes;
     let col = '.col'
-    for (let i = 1; i< header.length;i++) {
-        if (header[i].textContent == colLabel){
+    for (let i = 1; i < header.length; i++) {
+        if (header[i].textContent == colLabel) {
             col = '.col' + String(i);
         }
     }
-    let row = ".row"+number.join("");
-    let td = document.querySelector(row+" "+col);
+    let row = ".row" + number.join("");
+    let td = document.querySelector(row + " " + col);
     // console.log(label)
     // console.log(td)
     return td.childNodes[0]
 }
 
-function handleStaticFormula(td) {
-    let text = td.childNodes[0].value;
+function handleSumFormula(start, end){
+
+}
+
+window.handleStaticFormula = function handleStaticFormula(td) {
+    let text = "aaaaa"
+    if (td.childNodes.length > 1) {
+        text = td.childNodes[1].textContent;
+    } else {
+        text = td.childNodes[0].value;
+    }
+    console.log('handle formula triggered')
     if (text[0] == "=") {
+        let part1;
+        let part2;
+        let res;
         let formula = text.slice(1);
         if (text.includes("+")) {
-            let part1 = findTd(formula.split('+')[0])
-            let part2 = findTd(formula.split('+')[1])
-            // td.textContent = parseInt(add1.value) + parseInt(add2.value);
-            if (td.childNodes.length == 1) {
-                let txt = document.createElement("div")
-                txt.style.display = "none"
-                txt.textContent = text
-                td.appendChild(txt);
-            } else {
-                td.childNodes[1].textContent = text
-            }
-            td.childNodes[0].value = parseInt(part1.value) + parseInt(part2.value);
+            part1 = findTd(formula.split('+')[0])
+            part2 = findTd(formula.split('+')[1])
+            res = parseInt(part1.value) + parseInt(part2.value);
         } else if (text.includes("-")) {
-            let part1 = findTd(formula.split('-')[0])
-            let part2 = findTd(formula.split('-')[1])
-            if (td.childNodes.length == 1) {
-                let txt = document.createElement("div")
-                txt.style.display = "none"
-                txt.textContent = text
-                td.appendChild(txt);
-            } else {
-                td.childNodes[1].textContent = text
-            }
-            td.childNodes[0].value = parseInt(part1.value) - parseInt(part2.value);
+            part1 = findTd(formula.split('-')[0])
+            part2 = findTd(formula.split('-')[1])
+            res = parseInt(part1.value) - parseInt(part2.value);
         } else if (text.includes("*")) {
-            let part1 = findTd(formula.split('*')[0])
-            let part2 = findTd(formula.split('*')[1])
-            if (td.childNodes.length == 1) {
-                let txt = document.createElement("div")
-                txt.style.display = "none"
-                txt.textContent = text
-                td.appendChild(txt);
-            } else {
-                td.childNodes[1].textContent = text
-            }
-            td.childNodes[0].value = parseInt(part1.value) * parseInt(part2.value);
+            part1 = findTd(formula.split('*')[0])
+            part2 = findTd(formula.split('*')[1])
+            res = parseInt(part1.value) * parseInt(part2.value);
         } else if (text.includes("/")) {
-            let part1 = findTd(formula.split('/')[0])
-            let part2 = findTd(formula.split('/')[1])
-            if (td.childNodes.length == 1) {
-                let txt = document.createElement("div")
-                txt.style.display = "none"
-                txt.textContent = text
-                td.appendChild(txt);
-            } else {
-                td.childNodes[1].textContent = text
-            }
-            td.childNodes[0].value = parseInt(part1.value) / parseInt(part2.value);
+            part1 = findTd(formula.split('/')[0])
+            part2 = findTd(formula.split('/')[1])
+            res = parseInt(part1.value) / parseInt(part2.value);
+        } else if (text.includes(':')){
+            part1 = findTd(formula.split(':')[0])
+            part2 = findTd(formula.split(':')[1])
+            res = handleSumFormula(part1, part2)
         }
+        if (td.childNodes.length == 1) {
+            let txt = document.createElement("div")
+            txt.style.display = "none"
+            txt.textContent = text
+            td.appendChild(txt);
+        } else {
+            td.childNodes[1].textContent = text
+        }
+        td.childNodes[0].value = res;
+        let p1Ob = fromEvent(part1, "input");
+        let p2Ob = fromEvent(part2, "input");
+        // if (subP1Map[td]) {
+        //     subP1Map[td].unsubscribe()
+        // }
+        // if (subP2Map[td]) {
+        //     subP2Map[td].unsubscribe()
+        // }
+        subP1Map[td] = p1Ob.subscribe(() => handleStaticFormula(td))
+        subP2Map[td] = p2Ob.subscribe(() => handleStaticFormula(td))
     }
 }
 
-function handleCell(event) {
+window.handleCell = function handleCell(event) {
     let td = event.target.parentNode;
     handleStaticFormula(td)
     console.log(event.target);
@@ -99,6 +109,7 @@ function createTd() {
     let input = document.createElement('input');
     input.type = "text";
     input.setAttribute("onblur", "handleCell(event)");
+    // input.addEventListener("onblur",  "handleCell(event)")
     td.appendChild(input);
     return td
 }
@@ -119,6 +130,7 @@ window.onload = function () {
     let id = "row" + String(1);
     tr.setAttribute("class", id);
     tr.setAttribute("onclick", "change()")
+    // tr.addEventListener('onclick', "change()")
     rows++;
     columns++;
     // create #of cols
@@ -133,7 +145,7 @@ function reNumberRow() {
     dye(false);
     let table = document.getElementById('roottable');
     let trs = table.childNodes;
-    for (let i = 1; i<trs.length; i++) {
+    for (let i = 1; i < trs.length; i++) {
         let tr = trs[i]
         tr.className = "row" + String(i);
         tr.childNodes[0].textContent = i;
@@ -144,17 +156,17 @@ function reNumberCol() {
     dye(false);
     let table = document.getElementById('roottable');
     let trs = table.childNodes;
-    for (let i = 1; i<trs.length; i++) {
+    for (let i = 1; i < trs.length; i++) {
         let tr = trs[i]
         let tds = tr.childNodes;
-        for (let j=1; j < tds.length;j++){
+        for (let j = 1; j < tds.length; j++) {
             let td = tds[j]
             td.className = "col" + String(j)
         }
     }
 }
 
-function addRow(bias) {
+window.addRow = function addRow(bias) {
     let table = document.getElementById('roottable')
     if (selRow != "") {
         let tr = document.createElement("tr");
@@ -185,7 +197,7 @@ function addRow(bias) {
     }
 }
 
-function addCol(bias) {
+window.addCol = function addCol(bias) {
     let table = document.getElementById('roottable')
     if (selCol != "") {
         let header = table.childNodes[0]
@@ -193,7 +205,7 @@ function addCol(bias) {
         th.append(genColId(columns));
         header.appendChild(th);
         let trs = table.childNodes;
-        for(let i=1; i<trs.length;i++){
+        for (let i = 1; i < trs.length; i++) {
             let curRow = trs[i];
             let selColTd = trs[i].querySelector("." + selCol);
             let td = createTd();
@@ -254,7 +266,7 @@ function dye(flag) {
 }
 
 
-function change(change) {
+window.change = function change(change) {
     let table = document.getElementById('roottable')
     let sel = window.event.srcElement;
     if (sel.tagName.toLowerCase() == "input" || sel.tagName.toLowerCase() == "div") {
@@ -283,7 +295,7 @@ function change(change) {
     }
 }
 
-function removeRow() {
+window.removeRow = function removeRow() {
     let table = document.getElementById('roottable')
     if (selRow != "" && rows > 2) {
         let trs = table.childNodes;
@@ -309,7 +321,7 @@ function removeRow() {
     }
 }
 
-function removeCol() {
+window.removeCol = function removeCol() {
     let table = document.getElementById('roottable')
     if (selCol != "" && columns > 2) {
         let trs = table.childNodes;
