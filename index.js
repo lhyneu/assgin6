@@ -4,9 +4,14 @@ var selCol = '';
 var selRow = '';
 window.subP1Map = {};
 window.subP2Map = {};
+window.sumMap = {};
+
+var reg = /=SUM(.*:.*)/;
 
 // const { fromEvent } = window.rxjs;
 import { fromEvent } from "rxjs";
+import { min } from "rxjs-compat/operator/min";
+import { max } from "rxjs-compat/operator/max";
 // import Rx from "rxjs/Rx";
 // var rxjs = require('rxjs');
 
@@ -36,19 +41,43 @@ function findTd(label) {
     return td.childNodes[0]
 }
 
-function handleSumFormula(start, end){
+function handleSumFormula(start, end, formulaTd){
+    let start_td = start.parentNode
+    let end_td = end.parentNode
+    let start_row = parseInt(start_td.parentNode.className.slice(3))
+    let start_col = parseInt(start_td.className.slice(3))
+    let end_row = parseInt(end_td.parentNode.className.slice(3))
+    let end_col = parseInt(end_td.className.slice(3))
+    let table = document.getElementById('roottable')
+    let trs = table.childNodes
+    let res = 0
+    for (let i = Math.min(start_row, end_row); i <= Math.max(start_row, end_row); i++) {
+        let tds = trs[i].childNodes
+        for (let j = Math.min(start_col, end_col); j<= Math.max(start_col, end_col); j++) {
+            let td = tds[j]
+            let Ob = fromEvent(td.childNodes[0], "input");
+            let cord = formulaTd.parentNode.className + formulaTd.className
+            sumMap[cord].push(Ob.subscribe(() => handleSubscribe(formulaTd)))
+            let val = td.querySelector('input').value
+            if (val == ""){
+                res += 0
+            } else {
+                res += parseInt(val)
+            }
+        }
+    }
+    return res
+}
 
+function handleSubscribe(td) {
+    td.childNodes[0].value = td.childNodes[1].textContent;
+    handleStaticFormula(td)
 }
 
 window.handleStaticFormula = function handleStaticFormula(td) {
-    let text = "aaaaa"
-    if (td.childNodes.length > 1) {
-        text = td.childNodes[1].textContent;
-    } else {
-        text = td.childNodes[0].value;
-    }
+    let text = td.childNodes[0].value;
     console.log('handle formula triggered')
-    if (text[0] == "=") {
+    if (text!="" && text[0] == "=") {
         let part1;
         let part2;
         let res;
@@ -56,23 +85,75 @@ window.handleStaticFormula = function handleStaticFormula(td) {
         if (text.includes("+")) {
             part1 = findTd(formula.split('+')[0])
             part2 = findTd(formula.split('+')[1])
-            res = parseInt(part1.value) + parseInt(part2.value);
+            let p1v = parseInt(part1.value)
+            let p2v = parseInt(part2.value)
+            if (part1.value == "")
+                p1v = 0
+            if (part2.value == "")
+                p2v = 0
+            res = p1v + p2v;
         } else if (text.includes("-")) {
             part1 = findTd(formula.split('-')[0])
             part2 = findTd(formula.split('-')[1])
-            res = parseInt(part1.value) - parseInt(part2.value);
+            let p1v = parseInt(part1.value)
+            let p2v = parseInt(part2.value)
+            if (part1.value == "")
+                p1v = 0
+            if (part2.value == "")
+                p2v = 0
+            res = p1v - p2v;
         } else if (text.includes("*")) {
             part1 = findTd(formula.split('*')[0])
             part2 = findTd(formula.split('*')[1])
-            res = parseInt(part1.value) * parseInt(part2.value);
+            let p1v = parseInt(part1.value)
+            let p2v = parseInt(part2.value)
+            if (part1.value == "")
+                p1v = 0
+            if (part2.value == "")
+                p2v = 0
+            res = p1v * p2v;
         } else if (text.includes("/")) {
             part1 = findTd(formula.split('/')[0])
             part2 = findTd(formula.split('/')[1])
-            res = parseInt(part1.value) / parseInt(part2.value);
-        } else if (text.includes(':')){
+            let p1v = parseInt(part1.value)
+            let p2v = parseInt(part2.value)
+            if (part1.value == "")
+                p1v = 0
+            if (part2.value == "")
+                p2v = 0
+            res = p1v / p2v;
+        } else if (reg.test(text)){
+            formula = formula.slice(4, formula.length-1)
             part1 = findTd(formula.split(':')[0])
             part2 = findTd(formula.split(':')[1])
-            res = handleSumFormula(part1, part2)
+            let cord = td.parentNode.className + td.className
+            if (sumMap[cord]) {
+                sumMap[cord].forEach(element => {
+                    element.unsubscribe();
+                });
+            } else {
+                sumMap[cord] = []
+            }
+            res = handleSumFormula(part1, part2, td)
+        } else {
+            if (td.childNodes.length != 1) {
+                td.childNodes[1].textContent = text
+            }
+            let cord = td.parentNode.className + td.className
+            if (sumMap[cord]) {
+                sumMap[cord].forEach(element => {
+                    element.unsubscribe();
+                });
+            }
+            if (subP1Map[cord]) {
+                subP1Map[cord].unsubscribe()
+                console.log("UNSUB 1")
+            }
+            if (subP2Map[cord]) {
+                subP2Map[cord].unsubscribe()
+                console.log("UNSUB 2")
+            }
+            return
         }
         if (td.childNodes.length == 1) {
             let txt = document.createElement("div")
@@ -85,14 +166,34 @@ window.handleStaticFormula = function handleStaticFormula(td) {
         td.childNodes[0].value = res;
         let p1Ob = fromEvent(part1, "input");
         let p2Ob = fromEvent(part2, "input");
-        // if (subP1Map[td]) {
-        //     subP1Map[td].unsubscribe()
-        // }
-        // if (subP2Map[td]) {
-        //     subP2Map[td].unsubscribe()
-        // }
-        subP1Map[td] = p1Ob.subscribe(() => handleStaticFormula(td))
-        subP2Map[td] = p2Ob.subscribe(() => handleStaticFormula(td))
+        let cord = td.parentNode.className + td.className
+        if (subP1Map[cord]) {
+            subP1Map[cord].unsubscribe()
+        }
+        if (subP2Map[cord]) {
+            subP2Map[cord].unsubscribe()
+        }
+        subP1Map[cord] = p1Ob.subscribe(() => handleSubscribe(td))
+        subP2Map[cord] = p2Ob.subscribe(() => handleSubscribe(td))
+    } else {
+        if (td.childNodes.length != 1) {
+            td.childNodes[1].textContent = text
+        }
+        let cord = td.parentNode.className + td.className
+        if (sumMap[cord]) {
+            sumMap[cord].forEach(element => {
+                element.unsubscribe();
+            });
+        }
+        if (subP1Map[cord]) {
+            subP1Map[cord].unsubscribe()
+            console.log("UNSUB 1")
+        }
+        if (subP2Map[cord]) {
+            subP2Map[cord].unsubscribe()
+            console.log("UNSUB 2")
+        }
+        return
     }
 }
 
