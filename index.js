@@ -240,6 +240,7 @@ window.onload = function () {
     td.setAttribute("class", id);
     tr.appendChild(td);
     table.appendChild(tr)
+    console.log(rows, columns)
 }
 
 function reNumberRow() {
@@ -500,3 +501,43 @@ function gencsv() {
     export_table_to_csv(html, "table.csv");
 }
 
+window.loadCsv = function loadCsv () {
+    var files = document.getElementById("file-value").files;
+    if(files.length) {
+        var file = files[0];
+        var reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = function(f) {
+            console.log(this.result)
+            var txt = this.result.split("\n");
+            processData(txt)
+        }
+    }
+}
+
+function processData(allTextLines) {
+    let table = document.getElementById('roottable')
+    var data = []
+    allTextLines.forEach(element => {
+        data.push(element.split(','))
+    })
+    let rowNeed = data.length
+    let colNeed = data[0].length
+    while (rowNeed > rows - 1) {
+        selRow = 'row' + String(rows-1)
+        selCol = 'col1'
+        addRow(1)
+    }
+    while (colNeed > columns - 1) {
+        selRow = 'row1'
+        selCol = 'col' + String(columns-1)
+        addCol(1)
+    }
+    for (let i = 1;i<rows;i++) {
+        for (let j = 1;j<columns;j++){
+            table.childNodes[i].childNodes[j].childNodes[0].value = data[i-1][j-1]
+        }
+    }
+    // alert(lines);
+    console.log(data)
+}

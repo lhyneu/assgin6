@@ -19,9 +19,14 @@
         <button onclick="addRow(1)">Add Row After</button>
         <button onclick="addCol(-1)">Add Col Before</button>
         <button onclick="addCol(1)">Add Col After</button>
-        <button onclick="gencsv()">Download CSV</button>
         <button onclick="removeRow()">Remove Row</button>
         <button onclick="removeCol()">Remove Col</button>
+        <button onclick="gencsv()">Download CSV</button>
+        <!-- <button onclick="loadCsv()">Load CSV</button> -->
+        <fieldset>
+            <input type="file" / id="file-value">
+        </fieldset>
+        <button onclick="loadCsv()">Upload CSV</button>
     </nav>
     <div class="maincontent">
         <table id="roottable"></table>
